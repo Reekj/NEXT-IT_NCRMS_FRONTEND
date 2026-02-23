@@ -1,0 +1,7 @@
+@import "tailwindcss";
+@config "../../tailwind.config.js";
+
+/* Global styles here, e.g., font-family */
+body {
+  font-family: "Inter", sans-serif;
+}
