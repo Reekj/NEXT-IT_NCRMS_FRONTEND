@@ -149,6 +149,6 @@ onBeforeUnmount(() => {
 function logout() {
   localStorage.clear();
   sessionStorage.clear();
-  router.replace("/login");
+  router.replace("/roles");
 }
 </script>

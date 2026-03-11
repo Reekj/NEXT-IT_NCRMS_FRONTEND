@@ -93,7 +93,7 @@
         <div class="sm:hidden p-5 space-y-4">
           <Motion
             v-for="row in pagedRows"
-            :key="row.id"
+            :key="row.key"
             tag="div"
             class="rounded-2xl border border-black/10 bg-white p-4 shadow-[0_1px_0_rgba(0,0,0,0.03)]"
             :initial="{ opacity: 0, y: 10 }"
@@ -136,11 +136,12 @@
               <Motion
                 tag="button"
                 type="button"
-                class="text-black/45 hover:text-black/70"
+                class="text-black/45 hover:text-black/70 disabled:opacity-50 disabled:cursor-not-allowed"
                 title="View"
-                @click="goView(row.id)"
-                :whileHover="{ scale: 1.12 }"
-                :whileTap="{ scale: 0.9 }"
+                @click="goView(row.apiId)"
+                :disabled="!row.apiId"
+                :whileHover="row.apiId ? { scale: 1.12 } : {}"
+                :whileTap="row.apiId ? { scale: 0.9 } : {}"
                 :transition="{ duration: 0.12 }"
               >
                 <Eye class="h-5 w-5" />
@@ -149,11 +150,12 @@
               <Motion
                 tag="button"
                 type="button"
-                class="text-black/45 hover:text-black/70"
+                class="text-black/45 hover:text-black/70 disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Edit"
-                @click="goEdit(row.id)"
-                :whileHover="{ scale: 1.12 }"
-                :whileTap="{ scale: 0.9 }"
+                @click="goEdit(row.apiId)"
+                :disabled="!row.apiId"
+                :whileHover="row.apiId ? { scale: 1.12 } : {}"
+                :whileTap="row.apiId ? { scale: 0.9 } : {}"
                 :transition="{ duration: 0.12 }"
               >
                 <Pencil class="h-5 w-5" />
@@ -162,11 +164,12 @@
               <Motion
                 tag="button"
                 type="button"
-                class="text-black/45 hover:text-red-600"
+                class="text-black/45 hover:text-red-600 disabled:opacity-60 disabled:cursor-not-allowed"
                 title="Delete"
-                @click="removeRow(row.id)"
-                :whileHover="{ scale: 1.12 }"
-                :whileTap="{ scale: 0.9 }"
+                @click="removeRow(row.apiId)"
+                :disabled="!row.apiId || deletingId === String(row.apiId)"
+                :whileHover="row.apiId ? { scale: 1.12 } : {}"
+                :whileTap="row.apiId ? { scale: 0.9 } : {}"
                 :transition="{ duration: 0.12 }"
               >
                 <Trash2 class="h-5 w-5" />
@@ -174,7 +177,7 @@
             </div>
           </Motion>
 
-          <div v-if="!isLoading && rows.length === 0" class="py-10 text-center">
+          <div v-if="!isLoading && filteredAll.length === 0" class="py-10 text-center">
             <div class="text-[14px] font-semibold text-black">No Zonal Coordinators</div>
             <div class="mt-2 text-[13px] text-black/60">
               Click <span class="font-medium">New</span> to create a Zonal Coordinator.
@@ -206,7 +209,7 @@
               >
                 <Motion
                   v-for="row in pagedRows"
-                  :key="row.id"
+                  :key="row.key"
                   tag="tr"
                   class="hover:bg-black/[0.01]"
                   :initial="{ opacity: 0, y: 6 }"
@@ -238,11 +241,12 @@
                       <Motion
                         tag="button"
                         type="button"
-                        class="text-black/40 hover:text-black/70"
+                        class="text-black/40 hover:text-black/70 disabled:opacity-50 disabled:cursor-not-allowed"
                         title="View"
-                        @click="goView(row.id)"
-                        :whileHover="{ scale: 1.12 }"
-                        :whileTap="{ scale: 0.9 }"
+                        @click="goView(row.apiId)"
+                        :disabled="!row.apiId"
+                        :whileHover="row.apiId ? { scale: 1.12 } : {}"
+                        :whileTap="row.apiId ? { scale: 0.9 } : {}"
                         :transition="{ duration: 0.12 }"
                       >
                         <Eye class="h-4 w-4" />
@@ -251,11 +255,12 @@
                       <Motion
                         tag="button"
                         type="button"
-                        class="text-black/40 hover:text-black/70"
+                        class="text-black/40 hover:text-black/70 disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Edit"
-                        @click="goEdit(row.id)"
-                        :whileHover="{ scale: 1.12 }"
-                        :whileTap="{ scale: 0.9 }"
+                        @click="goEdit(row.apiId)"
+                        :disabled="!row.apiId"
+                        :whileHover="row.apiId ? { scale: 1.12 } : {}"
+                        :whileTap="row.apiId ? { scale: 0.9 } : {}"
                         :transition="{ duration: 0.12 }"
                       >
                         <Pencil class="h-4 w-4" />
@@ -264,11 +269,12 @@
                       <Motion
                         tag="button"
                         type="button"
-                        class="text-black/40 hover:text-red-600"
+                        class="text-black/40 hover:text-red-600 disabled:opacity-60 disabled:cursor-not-allowed"
                         title="Delete"
-                        @click="removeRow(row.id)"
-                        :whileHover="{ scale: 1.12 }"
-                        :whileTap="{ scale: 0.9 }"
+                        @click="removeRow(row.apiId)"
+                        :disabled="!row.apiId || deletingId === String(row.apiId)"
+                        :whileHover="row.apiId ? { scale: 1.12 } : {}"
+                        :whileTap="row.apiId ? { scale: 0.9 } : {}"
                         :transition="{ duration: 0.12 }"
                       >
                         <Trash2 class="h-4 w-4" />
@@ -277,7 +283,7 @@
                   </td>
                 </Motion>
 
-                <tr v-if="!isLoading && rows.length === 0">
+                <tr v-if="!isLoading && filteredAll.length === 0">
                   <td class="tdCell tdCell--last text-center text-black/50" colspan="7">
                     No records found.
                   </td>
@@ -359,13 +365,13 @@ import {
   UserPlus,
 } from "lucide-vue-next";
 
-import { listZonalCoordinators } from "../../../../services/coordinator.service";
+import { listZonalCoordinators, deleteZonalCoordinator } from "../../../../services/coordinator.service";
 import { getApiErrorMessage } from "../../../../services/api";
 
 const router = useRouter();
 
 const user = {
-  name: "Helena John",
+  name: "Headquarters",
   role: "Headquarters",
   avatarUrl: "",
 };
@@ -376,22 +382,18 @@ const search = ref("");
 const isLoading = ref(false);
 const errorMsg = ref("");
 
+const deletingId = ref("");
+
 const page = ref(1);
 const pageSize = 9;
 
 function zoneToLabel(zone) {
-  // backend could return 0..8 or 1..9 or even "Zone 1"
   if (typeof zone === "string" && zone.toLowerCase().includes("zone")) return zone;
 
   const n = Number(zone);
   if (!Number.isFinite(n)) return "—";
 
-  // If backend uses 0-index: 0 => Zone 1
-  // If backend uses 1-index: 1 => Zone 1
-  const zoneNumber = n === 0 ? 1 : n; // handles n=0
-  if (zoneNumber >= 1 && zoneNumber <= 9) return `Zone ${zoneNumber}`;
-
-  // fallback: assume 0-index if in 0..8
+  if (n >= 1 && n <= 9) return `Zone ${n}`;
   if (n >= 0 && n <= 8) return `Zone ${n + 1}`;
 
   return `Zone ${n}`;
@@ -404,7 +406,8 @@ function toStatus(s) {
   return v || "";
 }
 
-function formatDateLikeFigma(dateValue) {
+function formatDateCalendarUI(dateValue) {
+  // For display in table (not the date input).
   if (!dateValue) return "—";
   const d = new Date(dateValue);
   if (Number.isNaN(d.getTime())) return String(dateValue);
@@ -417,11 +420,6 @@ function formatDateLikeFigma(dateValue) {
 }
 
 function normalizeListResponse(data) {
-  // backend might return:
-  // 1) array directly
-  // 2) { data: [...] }
-  // 3) { coordinators: [...] }
-  // 4) { results: [...] }
   if (Array.isArray(data)) return data;
   if (Array.isArray(data?.data)) return data.data;
   if (Array.isArray(data?.coordinators)) return data.coordinators;
@@ -430,21 +428,23 @@ function normalizeListResponse(data) {
 }
 
 function normalizeRow(item, index) {
-  const id = item?.id || item?._id || item?.uuid || item?.coordinatorId || `${index}-${Date.now()}`;
+  // ✅ This MUST be the backend ID used by:
+  // GET/PUT/DELETE /api/admin/coordinator/{id}
+  const apiId = item?.id || item?._id || item?.uuid || null;
 
-  // coordinatorId could be provided by backend; else generate a stable-ish display id
   const coordinatorId =
     item?.coordinatorId ||
     item?.coordinatorID ||
-    (item?._id ? `ZC-${String(item._id).slice(-3).toUpperCase()}` : `ZC-${String(index + 1).padStart(3, "0")}`);
+    (apiId ? `ZC-${String(apiId).slice(-6).toUpperCase()}` : `ZC-${String(index + 1).padStart(3, "0")}`);
 
   return {
-    id,
+    key: apiId || `${coordinatorId}-${index}`, // Vue render key
+    apiId, // routing + delete
     coordinatorId,
-    fullName: item?.fullName || item?.name || "—",
+    fullName: item?.fullName || item?.name || item?.full_name || "—",
     email: item?.email || "—",
     zone: zoneToLabel(item?.zone),
-    dateCreated: formatDateLikeFigma(item?.createdAt || item?.dateCreated),
+    dateCreated: formatDateCalendarUI(item?.createdAt || item?.dateCreated || item?.created_at),
     status: toStatus(item?.status),
   };
 }
@@ -466,9 +466,7 @@ async function fetchRows() {
   }
 }
 
-onMounted(() => {
-  fetchRows();
-});
+onMounted(fetchRows);
 
 watch(
   () => search.value,
@@ -501,15 +499,24 @@ const pageButtons = computed(() => {
   const addPage = (n) => btns.push({ key: `p-${n}`, type: "page", value: n, label: String(n) });
   const addDots = (key) => btns.push({ key, type: "dots", value: null, label: "..." });
 
+  if (last <= 7) {
+    for (let i = 1; i <= last; i++) addPage(i);
+    return btns;
+  }
+
   addPage(1);
-  if (last >= 2) addPage(2);
-  if (last >= 3) addPage(3);
-  if (last >= 4) addPage(4);
+  addPage(2);
 
-  if (last > 6) addDots("dots-1");
+  if (page.value > 4) addDots("dots-l");
 
-  if (last >= 2) addPage(Math.max(5, last - 1));
-  if (last >= 1) addPage(last);
+  const start = Math.max(3, page.value - 1);
+  const end = Math.min(last - 2, page.value + 1);
+  for (let i = start; i <= end; i++) addPage(i);
+
+  if (page.value < last - 3) addDots("dots-r");
+
+  addPage(last - 1);
+  addPage(last);
 
   return btns;
 });
@@ -524,18 +531,38 @@ function nextPage() {
 function goNew() {
   router.push("/headquarters/zonal-coordinators-create");
 }
+
+// ✅ Use NAMED routes to prevent path mismatch + accidental redirects
 function goView(id) {
-  router.push(`/headquarters/zonal-coordinators/${id}`);
-}
-function goEdit(id) {
-  router.push(`/headquarters/zonal-coordinators/${id}/edit`);
+  const safe = String(id || "").trim();
+  if (!safe) return;
+  router.push({ name: "HeadquartersZonalCoordinatorView", params: { id: safe } });
 }
 
-// Delete endpoint not provided yet in your swagger snippet.
-// For now we keep the UI action but do local removal to avoid breaking UI.
-function removeRow(id) {
-  rows.value = rows.value.filter((r) => r.id !== id);
-  page.value = Math.min(page.value, totalPages.value);
+function goEdit(id) {
+  const safe = String(id || "").trim();
+  if (!safe) return;
+  router.push({ name: "HeadquartersZonalCoordinatorEdit", params: { id: safe } });
+}
+
+async function removeRow(id) {
+  const safe = String(id || "").trim();
+  if (!safe) return;
+
+  const ok = window.confirm("Delete this Zonal Coordinator? This cannot be undone.");
+  if (!ok) return;
+
+  deletingId.value = safe;
+
+  try {
+    await deleteZonalCoordinator(safe);
+    rows.value = rows.value.filter((r) => String(r.apiId) !== safe);
+    page.value = Math.min(page.value, totalPages.value);
+  } catch (err) {
+    alert(getApiErrorMessage(err));
+  } finally {
+    deletingId.value = "";
+  }
 }
 
 function onRefresh() {

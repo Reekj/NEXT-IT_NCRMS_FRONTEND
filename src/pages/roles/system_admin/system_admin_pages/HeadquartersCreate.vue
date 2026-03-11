@@ -1,4 +1,4 @@
-<!-- src/pages/roles/system_admin/system_admin_pages/ZonalAdminCreate.vue -->
+<!-- src/pages/roles/system_admin/system_admin_pages/HeadquartersCreate.vue -->
 <template>
   <SystemAdminLayout :user="user">
     <Motion
@@ -15,7 +15,7 @@
         :transition="{ duration: 0.25, easing: 'ease-out' }"
       >
         <div class="border-b border-black/10 px-7 py-5">
-          <h1 class="text-[20px] font-semibold text-black">Add Zonal Admin</h1>
+          <h1 class="text-[20px] font-semibold text-black">Add Headquarters</h1>
         </div>
 
         <div class="px-7 py-10">
@@ -97,7 +97,7 @@
                 />
               </Motion>
 
-              <!-- Assigned Zone -->
+              <!-- Assigned Zone (BACKEND EXPECTS NUMBER) -->
               <Motion
                 tag="div"
                 class="space-y-2"
@@ -107,38 +107,23 @@
               >
                 <div class="text-[13px] font-medium text-black/70">Assigned Zone</div>
                 <div class="relative">
-                  <select v-model="form.zone" class="input pr-10">
-                    <option value="" disabled>Select zone</option>
-                    <option>Zone 1</option>
-                    <option>Zone 2</option>
-                    <option>Zone 3</option>
-                    <option>Zone 4</option>
-                    <option>Zone 5</option>
-                    <option>Zone 6</option>
-                    <option>Zone 7</option>
-                    <option>Zone 8</option>
-                    <option>Zone 9</option>
-                  </select>
-                </div>
-              </Motion>
+                  <select v-model.number="form.zone" class="input pr-10">
+                    <option :value="null" disabled>Select zone</option>
 
-              <!-- Role -->
-              <Motion
-                tag="div"
-                class="space-y-2"
-                :initial="{ opacity: 0, y: 8 }"
-                :animate="{ opacity: 1, y: 0 }"
-                :transition="{ duration: 0.2 }"
-              >
-                <div class="text-[13px] font-medium text-black/70">Role</div>
-                <div class="relative">
-                  <select v-model="form.role" class="input pr-10">
-                    <option value="" disabled>Select role</option>
-                    <option value="headquarter">Headquarters</option>
-                    <option value="zonal_admin">Zonal Admin</option>
-                    <option value="officer">Officer</option>
+                    <!-- ✅ IMPORTANT: value is NUMBER -->
+                    <option :value="1">Zone 1</option>
+                    <option :value="2">Zone 2</option>
+                    <option :value="3">Zone 3</option>
+                    <option :value="4">Zone 4</option>
+                    <option :value="5">Zone 5</option>
+                    <option :value="6">Zone 6</option>
+                    <option :value="7">Zone 7</option>
+                    <option :value="8">Zone 8</option>
+                    <option :value="9">Zone 9</option>
                   </select>
                 </div>
+
+                <!-- If backend later shows it wants 0..8, we’ll switch values to 0..8. -->
               </Motion>
 
               <!-- Account Status (UI-only) -->
@@ -239,30 +224,30 @@ const user = {
   avatarUrl: "",
 };
 
+// ✅ Backend enum fix:
+const HQ_ROLE = "Headquarter";
+
 const form = reactive({
   firstName: "",
   lastName: "",
   email: "",
   serviceNumber: "",
   password: "",
-  zone: "",
-  role: "headquarter",
-  status: "Active",
-  dateCreated: "",
+  zone: null,        // ✅ number
+  status: "Active",  // UI-only
+  dateCreated: "",   // UI-only
 });
 
 async function save() {
   errorMsg.value = "";
 
-  // API-required fields (per swagger /api/auth/register)
   if (
     !form.serviceNumber ||
     !form.password ||
     !form.firstName ||
     !form.lastName ||
     !form.email ||
-    !form.role ||
-    !form.zone
+    form.zone === null
   ) {
     alert("Please fill all required fields.");
     return;
@@ -271,22 +256,18 @@ async function save() {
   isSaving.value = true;
 
   try {
-    // ✅ IMPORTANT FIX:
-    // /api/auth/register expects role: string, zone: string
-    // So we send exactly what the form selects (e.g. "headquarter", "Zone 1")
     await registerOfficer({
       serviceNumber: form.serviceNumber,
       password: form.password,
       firstName: form.firstName,
       lastName: form.lastName,
       email: form.email,
-      role: form.role,
-      zone: form.zone,
+      role: HQ_ROLE,
+      zone: form.zone, // ✅ number (1..9)
     });
 
-    router.push("/system-admin/zonal-admins");
+    router.push("/system-admin/headquarters");
   } catch (err) {
-    // show backend details to debug 500s
     console.log("REGISTER ERROR STATUS:", err?.response?.status);
     console.log("REGISTER ERROR BODY:", err?.response?.data);
     errorMsg.value =
@@ -299,7 +280,7 @@ async function save() {
 }
 
 function cancel() {
-  router.push("/system-admin/zonal-admins");
+  router.push("/system-admin/headquarters");
 }
 </script>
 

@@ -236,6 +236,6 @@ function logout() {
   sessionStorage.clear();
 
   // adjust this to your actual login route for zonal coordinator
-  router.replace("/login/zonal-coordinator");
+  router.replace("/roles");
 }
 </script>

@@ -19,6 +19,7 @@
       >
         <div class="border-b border-black/10 px-5 py-5 sm:px-7">
           <div class="text-[20px] font-semibold text-black">Add Zonal Coordinator</div>
+          <div class="mt-1 text-[12px] text-black/50">Create a new coordinator under Headquarters</div>
         </div>
 
         <form class="px-5 py-6 sm:px-7 sm:py-8" @submit.prevent="onSave">
@@ -32,7 +33,6 @@
                 class="h-12 w-full rounded-2xl border border-[#DCE7FF] bg-white px-4 text-[14px]
                        text-black/80 outline-none
                        focus:border-[#0A2395] focus:ring-4 focus:ring-[#0A2395]/10"
-                placeholder=""
               />
             </div>
 
@@ -45,7 +45,6 @@
                 class="h-12 w-full rounded-2xl border border-[#DCE7FF] bg-white px-4 text-[14px]
                        text-black/80 outline-none
                        focus:border-[#0A2395] focus:ring-4 focus:ring-[#0A2395]/10"
-                placeholder=""
               />
             </div>
 
@@ -64,13 +63,8 @@
                     {{ z.label }}
                   </option>
                 </select>
-                <ChevronDown
-                  class="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-black/40"
-                />
+                <ChevronDown class="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-black/40" />
               </div>
-              <!-- <div class="mt-1 text-[12px] text-black/40">
-                Zone is sent as a number to the backend (Zone 1 → 0, Zone 2 → 1, …).
-              </div> -->
             </div>
 
             <!-- Status -->
@@ -84,32 +78,34 @@
                          focus:border-[#0A2395] focus:ring-4 focus:ring-[#0A2395]/10"
                 >
                   <option value="" disabled>Select status</option>
-                  <!-- Swagger expects lowercase -->
                   <option value="active">Active</option>
                   <option value="inactive">Inactive</option>
                 </select>
-                <ChevronDown
-                  class="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-black/40"
-                />
+                <ChevronDown class="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-black/40" />
               </div>
             </div>
 
-            <!-- Date Created (UI-only; API doesn't require) -->
+            <!-- Date Created (UI-only) -->
             <div class="md:col-span-1">
               <label class="mb-2 block text-[13px] font-semibold text-black/80">Date Created</label>
-              <div class="relative">
-                <input
-                  v-model="form.dateCreated"
-                  type="date"
-                  class="h-12 w-full rounded-2xl border border-[#DCE7FF] bg-white px-4 pr-11 text-[14px]
-                         text-black/80 outline-none
-                         focus:border-[#0A2395] focus:ring-4 focus:ring-[#0A2395]/10"
-                />
-              </div>
-              <!-- <div class="mt-1 text-[12px] text-black/40">
-                Backend saves the creation time automatically. This field is for UI reference only.
-              </div> -->
+              <input
+                v-model="form.dateCreated"
+                type="date"
+                class="h-12 w-full rounded-2xl border border-[#DCE7FF] bg-white px-4 text-[14px]
+                       text-black/80 outline-none
+                       focus:border-[#0A2395] focus:ring-4 focus:ring-[#0A2395]/10"
+              />
+              <div class="mt-1 text-[12px] text-black/45">UI only — backend sets this automatically.</div>
             </div>
+          </div>
+
+          <!-- Inline feedback -->
+          <div v-if="errorMsg" class="mt-6 rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-[13px] text-red-700">
+            {{ errorMsg }}
+          </div>
+
+          <div v-if="successMsg" class="mt-6 rounded-xl border border-green-200 bg-green-50 px-5 py-4 text-[13px] text-green-700">
+            {{ successMsg }}
           </div>
 
           <div class="mt-10 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:gap-4">
@@ -162,16 +158,18 @@ import { createZonalCoordinator } from "../../../../services/coordinator.service
 import { getApiErrorMessage } from "../../../../services/api";
 
 const router = useRouter();
+
 const isSaving = ref(false);
+const errorMsg = ref("");
+const successMsg = ref("");
 
 const user = {
-  name: "Helena John",
+  name: "Headquarters",
   role: "Headquarters",
   avatarUrl: "",
 };
 
-// Swagger example shows zone: 0 (number). We map Zone 1..9 -> 0..8
-// If your backend expects 1..9 instead, change `value` to 1..9.
+// Swagger example shows zone: 0
 const zones = [
   { label: "Zone 1", value: 0 },
   { label: "Zone 2", value: 1 },
@@ -189,29 +187,32 @@ const form = reactive({
   email: "",
   zone: null,
   status: "",
-  dateCreated: "", // UI-only (API doesn't require)
+  dateCreated: "",
 });
 
 async function onSave() {
-  // Keep validation clean + obvious
+  errorMsg.value = "";
+  successMsg.value = "";
+
   if (!form.fullName || !form.email || form.zone === null || !form.status) {
-    alert("Please fill all fields.");
+    errorMsg.value = "Please fill all required fields.";
     return;
   }
 
   isSaving.value = true;
 
   try {
-    await createZonalCoordinator({
+    const res = await createZonalCoordinator({
       fullName: form.fullName,
       email: form.email,
-      zone: form.zone, // number
-      status: form.status === "active" ? "active" : "inactive",
+      zone: form.zone,
+      status: form.status, // "active" | "inactive"
     });
 
+    successMsg.value = res?.message || "Coordinator created successfully.";
     router.push("/headquarters/zonal-coordinators");
   } catch (err) {
-    alert(getApiErrorMessage(err));
+    errorMsg.value = getApiErrorMessage(err);
   } finally {
     isSaving.value = false;
   }

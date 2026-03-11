@@ -30,17 +30,17 @@ const SystemAdminDashboard = () =>
 const SystemAdminProfile = () =>
   import("../pages/roles/system_admin/system_admin_pages/Profile.vue");
 
-const SystemAdminZonalAdmins = () =>
-  import("../pages/roles/system_admin/system_admin_pages/ZonalAdmins.vue");
+const SystemAdminHeadquarters = () =>
+  import("../pages/roles/system_admin/system_admin_pages/Headquarters.vue");
 
-const SystemAdminZonalAdminCreate = () =>
-  import("../pages/roles/system_admin/system_admin_pages/ZonalAdminCreate.vue");
+const SystemAdminHeadquartersCreate = () =>
+  import("../pages/roles/system_admin/system_admin_pages/HeadquartersCreate.vue");
 
-const SystemAdminZonalAdminView = () =>
-  import("../pages/roles/system_admin/system_admin_pages/ZonalAdminView.vue");
+const SystemAdminHeadquartersView = () =>
+  import("../pages/roles/system_admin/system_admin_pages/HeadquartersView.vue");
 
-const SystemAdminZonalAdminEdit = () =>
-  import("../pages/roles/system_admin/system_admin_pages/ZonalAdminEdit.vue");
+const SystemAdminHeadquartersEdit = () =>
+  import("../pages/roles/system_admin/system_admin_pages/HeadquartersEdit.vue");
 
 const SystemAdminReports = () =>
   import("../pages/roles/system_admin/system_admin_pages/Reports.vue");
@@ -215,28 +215,28 @@ const routes = [
     meta: { title: "System Admin Profile - NCRMS" },
   },
   {
-    path: "/system-admin/zonal-admins",
-    name: "SystemAdminZonalAdmins",
-    component: SystemAdminZonalAdmins,
+    path: "/system-admin/headquarters",
+    name: "SystemAdminHeadquarters",
+    component: SystemAdminHeadquarters,
     meta: { title: "Zonal Admins - NCRMS" },
   },
   {
-    path: "/system-admin/zonal-admins/new",
-    name: "SystemAdminZonalAdminCreate",
-    component: SystemAdminZonalAdminCreate,
-    meta: { title: "Add Zonal Admin - NCRMS" },
+    path: "/system-admin/headquarters/new",
+    name: "SystemAdminHeadquartersCreate",
+    component: SystemAdminHeadquartersCreate,
+    meta: { title: "Add Headquarter - NCRMS" },
   },
   {
-    path: "/system-admin/zonal-admins/:id",
-    name: "SystemAdminZonalAdminView",
-    component: SystemAdminZonalAdminView,
-    meta: { title: "View Zonal Admin - NCRMS" },
+    path: "/system-admin/headquarters/:id",
+    name: "SystemAdminHeadquartersView",
+    component: SystemAdminHeadquartersView,
+    meta: { title: "View Headquarter - NCRMS" },
   },
   {
-    path: "/system-admin/zonal-admins/:id/edit",
-    name: "SystemAdminZonalAdminEdit",
-    component: SystemAdminZonalAdminEdit,
-    meta: { title: "Edit Zonal Admin - NCRMS" },
+    path: "/system-admin/headquarters/:id/edit",
+    name: "SystemAdminHeadquartersEdit",
+    component: SystemAdminHeadquartersEdit,
+    meta: { title: "Edit Headquarter - NCRMS" },
   },
   {
     path: "/system-admin/reports",
@@ -288,7 +288,7 @@ const routes = [
   },
   {
     path: "/headquarters/forensic-evidence",
-    name: "HeadquartersZonalCoordinatorEdit",
+    name: "HeadquartersZonalCoordinatorForensicEvidence",
     component: () => import("../pages/roles/headquarters/headquarters_pages/ForensicEvidence.vue"),
   },
   {
@@ -441,6 +441,43 @@ const routes = [
     name: "zc-zonal-officers-edit",
     component: () => import("../pages/roles/zonal coordniator/zonal_coordinator_pages/ZonalOfficerEdit.vue"),
   },
+  {
+    path: "/zonal-coordinators/divisions-locations",
+    name: "DivisionsLocations",
+    component: () => import("../pages/roles/zonal coordniator/zonal_coordinator_pages/DivisionsLocations.vue"),
+  },
+  {
+    path: "/zonal-coordinators/staff-directory",
+    name: "StaffDirectory",
+    component: () => import("../pages/roles/zonal coordniator/zonal_coordinator_pages/StaffDirectory.vue"),
+  },
+  {
+    path: "/zonal-coordinators/reports",
+    name: "Reports",
+    component: () => import("../pages/roles/zonal coordniator/zonal_coordinator_pages/Reports.vue"),
+  },
+  {
+    path: "/zonal-coordinators/criminal-records",
+    name: "CriminalRecords",
+    component: () => import("../pages/roles/zonal coordniator/zonal_coordinator_pages/CriminalRecords.vue"),
+  },
+  {
+    path: "/zonal-coordinators/incident-reports",
+    name: "IncidentReports",
+    component: () => import("../pages/roles/zonal coordniator/zonal_coordinator_pages/IncidentReports.vue"),
+  },
+  {
+    path: "/zonal-coordinators/crime-analytics",
+    name: "CrimeAnalytics",
+    component: () => import("../pages/roles/zonal coordniator/zonal_coordinator_pages/CrimeAnalytics.vue"),
+  },
+  {
+    path: "/zonal-coordinators/forensic-evidence",
+    name: "ForensicEvidence",
+    component: () => import("../pages/roles/zonal coordniator/zonal_coordinator_pages/ForensicEvidence.vue"),
+  },
+  
+  
   
 
   // ==============================
@@ -499,6 +536,41 @@ const routes = [
   path: "/state-command/divisional-coordinators/:id/edit",
   name: "StateCommandDivisionalCoordinatorEdit",
   component: () => import("../pages/roles/state_command/state_command_pages/DivisionalCoordinatorEdit.vue"),
+},
+{
+  path: "/state-command/divisions-locations",
+  name: "DivisionsLocations",
+  component: () => import("../pages/roles/state_command/state_command_pages/DivisionsLocations.vue"),
+},
+{
+  path: "/state-command/staff-directory",
+  name: "StaffDirectory",
+  component: () => import("../pages/roles/state_command/state_command_pages/StaffDirectory.vue"),
+},
+{
+  path: "/state-command/reports",
+  name: "Reports",
+  component: () => import("../pages/roles/state_command/state_command_pages/Reports.vue"),
+},
+{
+  path: "/state-command/criminal-records",
+  name: "CriminalRecords",
+  component: () => import("../pages/roles/state_command/state_command_pages/CriminalRecords.vue"),
+},
+{
+  path: "/state-command/incident-reports",
+  name: "IncidentReports",
+  component: () => import("../pages/roles/state_command/state_command_pages/IncidentReports.vue"),
+},
+{
+  path: "/state-command/crime-analytics",
+  name: "CrimeAnalytics",
+  component: () => import("../pages/roles/state_command/state_command_pages/CrimeAnalytics.vue"),
+},
+{
+  path: "/state-command/forensic-evidence",
+  name: "ForensicEvidence",
+  component: () => import("../pages/roles/state_command/state_command_pages/ForensicEvidence.vue"),
 },
 
 // ==============================
@@ -577,6 +649,44 @@ const routes = [
       "../pages/roles/divisional_coordinator/divisional_coordinator_pages/DivisionUnitEdit.vue"
     ),
 },
+{
+  path: "/divisional-coordinator/divisions-locations",
+  name: "DivisionsLocations",
+  component: () => import("../pages/roles/divisional_coordinator/divisional_coordinator_pages/DivisionsLocations.vue"),
+},
+{
+  path: "/divisional-coordinator/staff-directory",
+  name: "StaffDirectory",
+  component: () => import("../pages/roles/divisional_coordinator/divisional_coordinator_pages/StaffDirectory.vue"),
+},
+{
+  path: "/divisional-coordinator/reports",
+  name: "Reports",
+  component: () => import("../pages/roles/divisional_coordinator/divisional_coordinator_pages/Reports.vue"),
+},
+{
+  path: "/divisional-coordinator/criminal-records",
+  name: "CriminalRecords",
+  component: () => import("../pages/roles/divisional_coordinator/divisional_coordinator_pages/CriminalRecords.vue"),
+},
+{
+  path: "/divisional-coordinator/incident-reports",
+  name: "IncidentReports",
+  component: () => import("../pages/roles/divisional_coordinator/divisional_coordinator_pages/IncidentReports.vue"),
+},
+{
+  path: "/divisional-coordinator/crime-analytics",
+  name: "CrimeAnalytics",
+  component: () => import("../pages/roles/divisional_coordinator/divisional_coordinator_pages/CrimeAnalytics.vue"),
+},
+{
+  path: "/divisional-coordinator/forensic-evidence",
+  name: "ForensicEvidence",
+  component: () => import("../pages/roles/divisional_coordinator/divisional_coordinator_pages/ForensicEvidence.vue"),
+},
+
+
+
 
 // Officer routes (paste inside your routes array)
 {

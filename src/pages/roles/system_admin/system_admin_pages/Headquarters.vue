@@ -1,4 +1,4 @@
-<!-- src/pages/roles/system_admin/system_admin_pages/ZonalAdmins.vue -->
+<!-- src/pages/roles/system_admin/system_admin_pages/Headquarters.vue -->
 <template>
   <SystemAdminLayout :user="user">
     <Motion
@@ -16,7 +16,7 @@
       >
         <!-- Header -->
         <div class="flex items-center justify-between border-b border-black/10 px-7 py-5">
-          <h1 class="text-[20px] font-semibold text-black">Zonal Admins</h1>
+          <h1 class="text-[20px] font-semibold text-black">Headquarters</h1>
 
           <div class="flex items-center gap-3">
             <Motion
@@ -24,10 +24,12 @@
               type="button"
               class="inline-flex h-10 items-center gap-2 rounded-lg px-4 text-[13px] font-medium text-white
                    bg-[linear-gradient(90deg,#0A2395_0%,#030B2F_100%)]
-                   shadow-sm hover:opacity-95 active:opacity-90"
+                   shadow-sm hover:opacity-95 active:opacity-90
+                   disabled:cursor-not-allowed disabled:opacity-60"
               @click="goNew"
-              :whileHover="{ scale: 1.02, y: -1 }"
-              :whileTap="{ scale: 0.96 }"
+              :disabled="isLoading"
+              :whileHover="isLoading ? {} : { scale: 1.02, y: -1 }"
+              :whileTap="isLoading ? {} : { scale: 0.96 }"
               :transition="{ duration: 0.15 }"
             >
               <Search class="h-4 w-4 text-white" />
@@ -38,16 +40,42 @@
               tag="button"
               type="button"
               class="inline-flex h-10 items-center gap-2 rounded-lg border border-black/10 bg-black/5 px-4
-                   text-[13px] font-medium text-black/70 hover:bg-black/10 active:bg-black/15"
+                   text-[13px] font-medium text-black/70 hover:bg-black/10 active:bg-black/15
+                   disabled:cursor-not-allowed disabled:opacity-60"
               @click="exportTable"
-              :whileHover="{ scale: 1.02, y: -1 }"
-              :whileTap="{ scale: 0.96 }"
+              :disabled="isLoading || rows.length === 0"
+              :whileHover="isLoading ? {} : { scale: 1.02, y: -1 }"
+              :whileTap="isLoading ? {} : { scale: 0.96 }"
               :transition="{ duration: 0.15 }"
             >
               <FileDown class="h-4 w-4 text-black/60" />
               Export Table
             </Motion>
           </div>
+        </div>
+
+        <!-- Top status row -->
+        <div class="px-7 py-4 border-b border-black/10 flex items-center justify-between">
+          <div class="text-[12px] text-black/60">
+            <span v-if="isLoading">Loading headquarters…</span>
+            <span v-else>Showing {{ rows.length }} record{{ rows.length === 1 ? "" : "s" }}</span>
+          </div>
+
+          <Motion
+            tag="button"
+            type="button"
+            class="inline-flex h-9 items-center gap-2 rounded-lg border border-black/10 bg-white px-3
+                   text-[12px] font-medium text-black/60 hover:bg-black/5 active:bg-black/10
+                   disabled:cursor-not-allowed disabled:opacity-60"
+            @click="fetchRows"
+            :disabled="isLoading"
+            :whileHover="isLoading ? {} : { scale: 1.02 }"
+            :whileTap="isLoading ? {} : { scale: 0.96 }"
+            :transition="{ duration: 0.12 }"
+          >
+            <span class="inline-block h-2 w-2 rounded-full" :class="isLoading ? 'bg-orange-500' : 'bg-green-500'"></span>
+            Refresh
+          </Motion>
         </div>
 
         <!-- Table -->
@@ -71,7 +99,28 @@
 
           <!-- Body -->
           <div>
+            <!-- Error -->
             <Motion
+              v-if="errorMsg"
+              tag="div"
+              class="px-7 py-6"
+              :initial="{ opacity: 0, y: 8 }"
+              :animate="{ opacity: 1, y: 0 }"
+              :transition="{ duration: 0.2 }"
+            >
+              <div class="rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-[13px] text-red-700">
+                {{ errorMsg }}
+              </div>
+            </Motion>
+
+            <!-- Loading skeleton-ish rows -->
+            <div v-else-if="isLoading" class="px-7 py-6 space-y-3">
+              <div v-for="i in 6" :key="i" class="h-12 rounded-xl bg-black/[0.03] border border-black/5"></div>
+            </div>
+
+            <!-- Rows -->
+            <Motion
+              v-else
               tag="div"
               :initial="{ opacity: 0 }"
               :animate="{ opacity: 1 }"
@@ -150,7 +199,7 @@
                       <Pencil class="h-4 w-4" />
                     </Motion>
 
-                    <!-- Delete (UI only) -->
+                    <!-- Delete (UI only for now) -->
                     <Motion
                       tag="button"
                       type="button"
@@ -166,21 +215,21 @@
                   </div>
                 </div>
               </Motion>
-            </Motion>
 
-            <!-- Empty state -->
-            <Motion
-              v-if="rows.length === 0"
-              tag="div"
-              class="px-7 py-12 text-center"
-              :initial="{ opacity: 0, y: 10 }"
-              :animate="{ opacity: 1, y: 0 }"
-              :transition="{ duration: 0.22, easing: 'ease-out' }"
-            >
-              <div class="text-[14px] font-semibold text-black">No Zonal Admins</div>
-              <div class="mt-2 text-[13px] text-black/60">
-                Click <span class="font-medium">New</span> to create a Zonal Admin.
-              </div>
+              <!-- Empty state -->
+              <Motion
+                v-if="rows.length === 0"
+                tag="div"
+                class="px-7 py-12 text-center"
+                :initial="{ opacity: 0, y: 10 }"
+                :animate="{ opacity: 1, y: 0 }"
+                :transition="{ duration: 0.22, easing: 'ease-out' }"
+              >
+                <div class="text-[14px] font-semibold text-black">No Headquarters</div>
+                <div class="mt-2 text-[13px] text-black/60">
+                  Click <span class="font-medium">New</span> to create a Headquarters account.
+                </div>
+              </Motion>
             </Motion>
           </div>
         </div>
@@ -193,9 +242,9 @@
               type="button"
               class="inline-flex h-10 items-center gap-2 border-r border-black/10 px-4 text-[13px] text-black/60 hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-50"
               @click="prevPage"
-              :disabled="page === 1"
-              :whileHover="page === 1 ? {} : { scale: 1.02 }"
-              :whileTap="page === 1 ? {} : { scale: 0.96 }"
+              :disabled="page === 1 || isLoading"
+              :whileHover="page === 1 || isLoading ? {} : { scale: 1.02 }"
+              :whileTap="page === 1 || isLoading ? {} : { scale: 0.96 }"
               :transition="{ duration: 0.12 }"
             >
               <ChevronLeft class="h-4 w-4" />
@@ -209,10 +258,10 @@
               type="button"
               class="h-10 min-w-10 border-r border-black/10 px-3 text-[13px] text-black/60 hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-60"
               :class="p.type === 'page' && p.value === page ? 'bg-black/[0.03] text-black' : ''"
-              :disabled="p.type === 'dots'"
+              :disabled="p.type === 'dots' || isLoading"
               @click="p.type === 'page' ? (page = p.value) : null"
-              :whileHover="p.type === 'dots' ? {} : { scale: 1.03 }"
-              :whileTap="p.type === 'dots' ? {} : { scale: 0.95 }"
+              :whileHover="p.type === 'dots' || isLoading ? {} : { scale: 1.03 }"
+              :whileTap="p.type === 'dots' || isLoading ? {} : { scale: 0.95 }"
               :transition="{ duration: 0.1 }"
             >
               {{ p.label }}
@@ -223,9 +272,9 @@
               type="button"
               class="inline-flex h-10 items-center gap-2 px-4 text-[13px] text-black/60 hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-50"
               @click="nextPage"
-              :disabled="page === totalPages"
-              :whileHover="page === totalPages ? {} : { scale: 1.02 }"
-              :whileTap="page === totalPages ? {} : { scale: 0.96 }"
+              :disabled="page === totalPages || isLoading"
+              :whileHover="page === totalPages || isLoading ? {} : { scale: 1.02 }"
+              :whileTap="page === totalPages || isLoading ? {} : { scale: 0.96 }"
               :transition="{ duration: 0.12 }"
             >
               Next
@@ -243,18 +292,12 @@ import { computed, ref, onMounted, watch } from "vue";
 import { Motion } from "@motionone/vue";
 import { useRouter, useRoute } from "vue-router";
 import SystemAdminLayout from "../layout/Layout.vue";
-import {
-  Eye,
-  Pencil,
-  Trash2,
-  ChevronLeft,
-  ChevronRight,
-  FileDown,
-  Search,
-} from "lucide-vue-next";
+import { Eye, Pencil, Trash2, ChevronLeft, ChevronRight, FileDown, Search } from "lucide-vue-next";
 
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+
+import { api, getApiErrorMessage } from "../../../../services/api";
 
 const router = useRouter();
 const route = useRoute();
@@ -265,24 +308,9 @@ const user = {
   avatarUrl: "",
 };
 
-const STORAGE_KEY = "ncrms_system_admin_zonal_admins";
-
-function readRows() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const parsed = raw ? JSON.parse(raw) : null;
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeRows(next) {
-  rows.value = next;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-}
-
 const rows = ref([]);
+const isLoading = ref(false);
+const errorMsg = ref("");
 
 const page = ref(1);
 const pageSize = 9;
@@ -294,25 +322,76 @@ const pagedRows = computed(() => {
   return rows.value.slice(start, start + pageSize);
 });
 
-function syncRows() {
-  rows.value = readRows();
-  page.value = Math.min(page.value, totalPages.value);
-  if (page.value < 1) page.value = 1;
+function formatDate(value) {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value);
+  return d.toLocaleString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
-onMounted(syncRows);
+function formatZone(z) {
+  if (z === null || z === undefined || z === "") return "—";
+  const n = Number(z);
+  if (!Number.isFinite(n)) return String(z);
+  return `Zone ${n}`;
+}
+
+function normalizeStatus(s) {
+  const v = String(s || "").trim();
+  if (!v) return "—";
+  // Keep as returned, but normalize common variants
+  const low = v.toLowerCase();
+  if (low === "active") return "Active";
+  if (low === "suspended") return "Suspended";
+  return v;
+}
+
+async function fetchRows() {
+  errorMsg.value = "";
+  isLoading.value = true;
+
+  try {
+    const res = await api.get("/api/admin/headquarters");
+    const admins = res?.data?.admins || [];
+
+    rows.value = admins.map((a) => ({
+      id: a?.id || a?._id || String(Math.random()),
+      fullName: a?.fullName || "—",
+      email: a?.email || "—",
+      zone: formatZone(a?.assignedZone),
+      status: normalizeStatus(a?.accountStatus),
+      lastLogin: a?.lastLogin ? formatDate(a.lastLogin) : "—",
+      dateCreated: a?.dateCreated ? formatDate(a.dateCreated) : "—",
+    }));
+
+    // reset page if needed
+    page.value = 1;
+  } catch (err) {
+    errorMsg.value = getApiErrorMessage(err);
+    rows.value = [];
+  } finally {
+    isLoading.value = false;
+  }
+}
+
+onMounted(fetchRows);
 
 watch(
   () => route.fullPath,
   () => {
-    if (route.path === "/system-admin/zonal-admins") syncRows();
+    if (route.path === "/system-admin/headquarters") fetchRows();
   }
 );
 
 const pageButtons = computed(() => {
   const last = totalPages.value;
   const btns = [];
-
   const addPage = (n) => btns.push({ key: `p-${n}`, type: "page", value: n, label: String(n) });
   const addDots = (key) => btns.push({ key, type: "dots", value: null, label: "..." });
 
@@ -337,16 +416,18 @@ function nextPage() {
 }
 
 function goNew() {
-  router.push("/system-admin/zonal-admins/new");
+  router.push("/system-admin/headquarters/new");
 }
 function goEdit(id) {
-  router.push(`/system-admin/zonal-admins/${id}/edit`);
+  router.push(`/system-admin/headquarters/${id}/edit`);
 }
 function goView(id) {
-  router.push(`/system-admin/zonal-admins/${id}`);
+  router.push(`/system-admin/headquarters/${id}`);
 }
+
+// UI-only for now — until backend delete endpoint is provided
 function removeRow(id) {
-  writeRows(rows.value.filter((r) => r.id !== id));
+  rows.value = rows.value.filter((r) => r.id !== id);
   page.value = Math.min(page.value, totalPages.value);
 }
 
@@ -360,7 +441,7 @@ function exportTable() {
   const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
 
   doc.setFontSize(14);
-  doc.text("NCRMS — Zonal Admins", 40, 40);
+  doc.text("NCRMS — Headquarters", 40, 40);
 
   doc.setFontSize(10);
   doc.text(`Generated: ${new Date().toLocaleString("en-GB")}`, 40, 58);
@@ -380,7 +461,7 @@ function exportTable() {
     headStyles: { fillColor: [3, 11, 47], textColor: 255, fontStyle: "bold" },
   });
 
-  doc.save(`zonal-admins-${new Date().toISOString().slice(0, 10)}.pdf`);
+  doc.save(`headquarters-${new Date().toISOString().slice(0, 10)}.pdf`);
 }
 
 function statusStyles(status) {
@@ -398,11 +479,6 @@ function statusDot(status) {
 </script>
 
 <style scoped>
-/* Matches Figma cell spec:
-   - min height 60px
-   - padding: 10px top/bottom, 16px left/right
-   - border-right + border-bottom 1px
-*/
 .cell {
   min-height: 60px;
   padding: 10px 16px;
@@ -412,14 +488,12 @@ function statusDot(status) {
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
   background: #fff;
 }
-
 .cell--head {
   background: rgba(0, 0, 0, 0.02);
   font-size: 13px;
   font-weight: 500;
   color: rgba(0, 0, 0, 0.5);
 }
-
 .cell--last {
   border-right: 0;
 }

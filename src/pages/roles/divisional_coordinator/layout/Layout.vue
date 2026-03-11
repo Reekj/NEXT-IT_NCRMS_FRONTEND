@@ -76,7 +76,7 @@
           </div>
   
           <!-- Page -->
-          <main class="mx-auto w-full max-w-[1200px] px-6 py-8 lg:px-10">
+          <main class="mx-0 w-full max-w-[1200px] px-6 py-8 lg:px-10">
             <slot />
           </main>
         </div>
@@ -107,7 +107,7 @@
   function logout() {
     localStorage.clear()
     sessionStorage.clear()
-    router.replace("/login")
+    router.replace("/roles")
   }
   </script>
   

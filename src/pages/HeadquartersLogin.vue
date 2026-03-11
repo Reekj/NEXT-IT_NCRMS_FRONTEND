@@ -43,7 +43,7 @@
                 />
               </div>
 
-              <!-- Service Number (mapped from your UI User ID) -->
+              <!-- Service Number -->
               <div>
                 <label class="text-[13px] font-medium text-black/70">
                   Service Number
@@ -194,10 +194,33 @@ const errorMsg = ref("");
 
 const form = reactive({
   username: "",
-  userId: "", // we will treat as serviceNumber for backend
+  userId: "", // serviceNumber
   password: "",
   remember: false,
 });
+
+function extractToken(data) {
+  return (
+    data?.token ||
+    data?.accessToken ||
+    data?.data?.token ||
+    data?.data?.accessToken ||
+    ""
+  );
+}
+
+function clearOtherRoleTokens() {
+  // clear admin token keys
+  localStorage.removeItem("ncrms_token_admin");
+  localStorage.removeItem("admin_token");
+
+  // clear generic/legacy keys that can cause collisions
+  localStorage.removeItem("ncrms_token");
+  localStorage.removeItem("token");
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("authToken");
+  localStorage.removeItem("jwt");
+}
 
 async function onSubmit() {
   errorMsg.value = "";
@@ -215,25 +238,28 @@ async function onSubmit() {
       password: form.password,
     });
 
-    // Token may be returned in different shapes. We'll grab the common ones.
-    const token =
-      data?.token ||
-      data?.accessToken ||
-      data?.data?.token ||
-      data?.data?.accessToken;
-
+    const token = extractToken(data);
     if (!token) {
       errorMsg.value =
         "Login successful but no token returned. Please check the login response shape in Swagger.";
       return;
     }
 
-    localStorage.setItem("ncrms_token", token);
+    // ✅ prevent cross-role profile collisions
+    clearOtherRoleTokens();
+
+    // ✅ store HQ token in correct key
+    localStorage.setItem("ncrms_token_hq", token);
+
+    // optional: store active role (helps debugging + routing)
+    localStorage.setItem("ncrms_active_role", "hq");
 
     // optional user storage
     const userObj = data?.user || data?.data?.user;
     if (userObj) {
-      localStorage.setItem("ncrms_user", JSON.stringify(userObj));
+      localStorage.setItem("ncrms_user_hq", JSON.stringify(userObj));
+    } else {
+      localStorage.removeItem("ncrms_user_hq");
     }
 
     router.push("/headquarters/dashboard");

@@ -75,7 +75,7 @@
     </header>
 
     <!-- HERO -->
-    <section class="relative flex h-[860px] overflow-hidden bg-[#1C283CCC]">
+    <section class="relative flex h-[866px] overflow-hidden bg-[#1C283CCC]">
       <!-- background image -->
       <div
         class="absolute inset-0 bg-cover bg-center opacity-2000"
@@ -120,7 +120,7 @@
           </p>
 
           <!-- CTA (286x80, radius 10, padding 24/32, text 24px) -->
-          <RouterLink to ="/roles"
+          <RouterLink to ="/"
             type="button"
             class="mt-10 inline-flex items-center justify-center gap-[10px]
                   rounded-[10px] text-white shadow-[0_10px_24px_rgba(3,11,47,0.35)]

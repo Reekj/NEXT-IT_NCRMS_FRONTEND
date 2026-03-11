@@ -33,22 +33,37 @@
         </button>
       </div>
 
+      <!-- Loading / Error bar -->
+      <div v-if="isLoading" class="mt-6 rounded-xl border border-black/10 bg-white p-4 text-[13px] text-black/70">
+        Loading profile…
+      </div>
+
+      <div
+        v-else-if="errorMsg"
+        class="mt-6 rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-[13px] text-red-700"
+      >
+        {{ errorMsg }}
+        <div class="mt-4 flex gap-3">
+          <button
+            type="button"
+            class="inline-flex h-10 items-center rounded-lg border border-black/10 bg-white px-4 text-[13px] font-medium text-black/70 hover:bg-black/[0.03]"
+            @click="fetchProfile"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+
       <!-- ================= EDIT PROFILE ================= -->
       <div
-        v-if="activeTab === 'edit'"
+        v-else-if="activeTab === 'edit'"
         class="mt-10 grid grid-cols-1 gap-10 lg:grid-cols-[220px_1fr]"
       >
         <!-- Avatar -->
         <div class="flex justify-center lg:justify-start">
           <div class="relative">
-            <!-- If you don't have profile.jpg, this will still render with a fallback bg -->
             <div class="h-[140px] w-[140px] rounded-full bg-black/5 overflow-hidden">
-              <img
-                v-if="avatarSrc"
-                :src="avatarSrc"
-                alt="Profile"
-                class="h-full w-full object-cover"
-              />
+              <img v-if="avatarSrc" :src="avatarSrc" alt="Profile" class="h-full w-full object-cover" />
             </div>
 
             <button
@@ -61,7 +76,6 @@
               <Pencil class="h-5 w-5" />
             </button>
 
-            <!-- Hidden file input for avatar upload -->
             <input
               ref="avatarInputRef"
               type="file"
@@ -73,10 +87,7 @@
         </div>
 
         <!-- Form -->
-        <form
-          class="grid grid-cols-1 gap-x-10 gap-y-6 md:grid-cols-2"
-          @submit.prevent="saveProfile"
-        >
+        <form class="grid grid-cols-1 gap-x-10 gap-y-6 md:grid-cols-2" @submit.prevent="saveProfile">
           <div>
             <label class="mb-2 block text-[13px] font-medium text-black/70">First Name</label>
             <input
@@ -188,7 +199,6 @@
           <h3 class="text-[16px] font-semibold text-black">Two-factor Authentication</h3>
 
           <div class="mt-4 flex items-center gap-3">
-            <!-- Toggle (NOW responsive) -->
             <button
               type="button"
               class="relative h-7 w-14 rounded-full shadow-inner transition"
@@ -202,9 +212,7 @@
               />
             </button>
 
-            <span class="text-[13px] text-black/60">
-              Enable or disable two factor authentication
-            </span>
+            <span class="text-[13px] text-black/60">Enable or disable two factor authentication</span>
           </div>
 
           <div class="mt-3 text-[12px] text-black/45">
@@ -219,6 +227,7 @@
             <div>
               <label class="mb-2 block text-[13px] font-medium text-black/70">Current Password</label>
               <input
+                v-model="passwordForm.currentPassword"
                 type="password"
                 class="h-12 w-full rounded-xl border border-[#DCE7FF] px-4 text-[13px] text-[#6E88C7]
                        outline-none focus:border-[#0A2395] focus:ring-2 focus:ring-[#0A2395]/10"
@@ -228,11 +237,26 @@
             <div>
               <label class="mb-2 block text-[13px] font-medium text-black/70">New Password</label>
               <input
+                v-model="passwordForm.newPassword"
                 type="password"
                 class="h-12 w-full rounded-xl border border-[#DCE7FF] px-4 text-[13px] text-[#6E88C7]
                        outline-none focus:border-[#0A2395] focus:ring-2 focus:ring-[#0A2395]/10"
               />
             </div>
+          </div>
+
+          <div
+            v-if="passwordMsg"
+            class="mt-5 rounded-xl border border-green-200 bg-green-50 px-5 py-3 text-[13px] text-green-700"
+          >
+            {{ passwordMsg }}
+          </div>
+
+          <div
+            v-if="passwordErr"
+            class="mt-5 rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-[13px] text-red-700"
+          >
+            {{ passwordErr }}
           </div>
         </div>
 
@@ -242,9 +266,12 @@
             class="h-12 w-[200px] rounded-xl
                    bg-[linear-gradient(90deg,#0A2395_0%,#030B2F_100%)]
                    text-[14px] font-semibold text-white
-                   shadow-sm transition hover:opacity-95 active:opacity-90"
+                   shadow-sm transition hover:opacity-95 active:opacity-90
+                   disabled:cursor-not-allowed disabled:opacity-60"
+            :disabled="isChangingPassword"
+            @click="changePassword"
           >
-            Save
+            {{ isChangingPassword ? "Saving..." : "Save" }}
           </button>
         </div>
       </div>
@@ -253,76 +280,117 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import { Pencil } from "lucide-vue-next";
+import { useRouter } from "vue-router";
 import SystemAdminLayout from "../layout/Layout.vue";
+import { api, getApiErrorMessage } from "../../../../services/api";
 
-const USER_STORAGE_KEY = "ncrms_system_admin_current_user";
+/**
+ * NOTE:
+ * We no longer use localStorage for profile truth.
+ * The source of truth is GET /api/auth/profile
+ */
 
-// If you have no profile image, keep avatarSrc as "" and the UI still shows.
+const router = useRouter();
+
 const avatarSrc = ref("");
 
 const user = ref({
-  name: "John Michaelson",
+  name: "—",
   role: "System Administrator",
   avatarUrl: "",
 });
 
-function readCurrentUser() {
-  try {
-    const raw = localStorage.getItem(USER_STORAGE_KEY);
-    const parsed = raw ? JSON.parse(raw) : null;
-    if (parsed && typeof parsed === "object") return parsed;
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-function writeCurrentUser(nextUser) {
-  localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(nextUser));
-  window.dispatchEvent(new CustomEvent("ncrms-user-updated"));
-}
-
 const activeTab = ref("edit");
+const isLoading = ref(false);
+const errorMsg = ref("");
 
 const form = ref({
-  firstName: "John",
-  lastName: "Michaelson",
-  email: "michaelson@gmail.com",
-  dob: "25 January 1990",
-  presentAddress: "45, Opebi Road, Ikeja",
-  permanentAddress: "45, Opebi Road, Ikeja",
-  city: "Lagos",
-  postalCode: "100001",
-  country: "Nigeria",
+  firstName: "",
+  lastName: "",
+  email: "",
+  dob: "",
+  presentAddress: "",
+  permanentAddress: "",
+  city: "",
+  postalCode: "",
+  country: "",
 });
 
 const twoFAEnabled = ref(false);
 
 const avatarInputRef = ref(null);
 
-(function init() {
-  const stored = readCurrentUser();
-  if (stored) {
-    user.value = {
-      name: stored.name || user.value.name,
-      role: stored.role || user.value.role,
-      avatarUrl: stored.avatarUrl || "",
-    };
-    avatarSrc.value = user.value.avatarUrl || "";
-  } else {
-    // seed storage once so header + profile always stay in sync
-    writeCurrentUser(user.value);
-  }
+// Password change
+const passwordForm = ref({
+  currentPassword: "",
+  newPassword: "",
+});
+const isChangingPassword = ref(false);
+const passwordMsg = ref("");
+const passwordErr = ref("");
 
-  // optionally hydrate the form name/email from stored user name
-  const parts = String(user.value.name || "").trim().split(/\s+/).filter(Boolean);
-  if (parts.length) {
-    form.value.firstName = parts[0] || form.value.firstName;
-    form.value.lastName = parts.length > 1 ? parts.slice(1).join(" ") : form.value.lastName;
+function buildName(firstName, lastName, fallbackFullName) {
+  const fn = String(firstName || "").trim();
+  const ln = String(lastName || "").trim();
+  const full = `${fn} ${ln}`.trim();
+  return full || String(fallbackFullName || "—").trim() || "—";
+}
+
+async function fetchProfile() {
+  errorMsg.value = "";
+  isLoading.value = true;
+
+  try {
+    const res = await api.get("/api/auth/profile");
+
+    // swagger doesn't show exact schema, so we tolerate common shapes
+    const payload = res?.data?.user || res?.data?.admin || res?.data?.data || res?.data;
+
+    if (!payload || typeof payload !== "object") {
+      errorMsg.value = "Failed to load profile.";
+      return;
+    }
+
+    const fullName = buildName(payload.firstName, payload.lastName, payload.fullName || payload.name);
+
+    user.value = {
+      ...user.value,
+      name: fullName,
+      role: payload.role || user.value.role,
+      avatarUrl: payload.avatarUrl || payload.avatar || "",
+    };
+
+    avatarSrc.value = user.value.avatarUrl || "";
+
+    // hydrate form
+    form.value = {
+      ...form.value,
+      firstName: payload.firstName || (String(fullName).split(/\s+/)[0] || ""),
+      lastName: payload.lastName || (String(fullName).split(/\s+/).slice(1).join(" ") || ""),
+      email: payload.email || "",
+      dob: payload.dob || payload.dateOfBirth || "",
+      presentAddress: payload.presentAddress || payload.address || "",
+      permanentAddress: payload.permanentAddress || "",
+      city: payload.city || "",
+      postalCode: payload.postalCode || "",
+      country: payload.country || "",
+    };
+  } catch (err) {
+    const status = err?.response?.status;
+    if (status === 401) {
+      // token missing/invalid
+      router.push("/login"); // adjust if your login route differs
+      return;
+    }
+    errorMsg.value = getApiErrorMessage(err);
+  } finally {
+    isLoading.value = false;
   }
-})();
+}
+
+onMounted(fetchProfile);
 
 function triggerAvatarUpload() {
   if (avatarInputRef.value) avatarInputRef.value.click();
@@ -337,34 +405,52 @@ function onAvatarSelected(e) {
     const dataUrl = String(reader.result || "");
     avatarSrc.value = dataUrl;
 
-    user.value = {
-      ...user.value,
-      avatarUrl: dataUrl,
-    };
-
-    writeCurrentUser(user.value);
+    // UI-only: backend update endpoint not provided yet for avatar
+    user.value = { ...user.value, avatarUrl: dataUrl };
   };
   reader.readAsDataURL(file);
 
-  // allow picking the same file again later
+  // allow picking same file again later
   e.target.value = "";
 }
 
 function saveProfile() {
-  // Update the "logged in user" name so header matches profile
-  const fullName = `${String(form.value.firstName || "").trim()} ${String(form.value.lastName || "").trim()}`.trim();
-
-  user.value = {
-    ...user.value,
-    name: fullName || user.value.name,
-  };
-
-  writeCurrentUser(user.value);
-
-  // UI-only for now
+  // No swagger endpoint given for updating profile.
+  // Keep UI-only so nothing breaks.
+  const fullName = buildName(form.value.firstName, form.value.lastName, user.value.name);
+  user.value = { ...user.value, name: fullName };
 }
 
 function toggle2FA() {
   twoFAEnabled.value = !twoFAEnabled.value;
+}
+
+async function changePassword() {
+  passwordMsg.value = "";
+  passwordErr.value = "";
+
+  if (!passwordForm.value.currentPassword || !passwordForm.value.newPassword) {
+    passwordErr.value = "Please enter your current password and a new password.";
+    return;
+  }
+
+  isChangingPassword.value = true;
+  try {
+    // Endpoint provided by you:
+    // POST /api/admin/change-password
+    const res = await api.post("/api/admin/change-password", {
+      currentPassword: passwordForm.value.currentPassword,
+      newPassword: passwordForm.value.newPassword,
+    });
+
+    passwordMsg.value = res?.data?.message || "Password changed successfully.";
+    passwordForm.value.currentPassword = "";
+    passwordForm.value.newPassword = "";
+  } catch (err) {
+    passwordErr.value =
+      err?.response?.data?.message || err?.response?.data?.error || getApiErrorMessage(err);
+  } finally {
+    isChangingPassword.value = false;
+  }
 }
 </script>

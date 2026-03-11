@@ -44,7 +44,7 @@
   const navItems = [
     { label: "Dashboard", to: "/system-admin/dashboard", icon: LayoutGrid },
     { label: "Profile", to: "/system-admin/profile", icon: User },
-    { label: "Zonal Admins", to: "/system-admin/zonal-admins", icon: Users },
+    { label: "Headquarters", to: "/system-admin/headquarters", icon: Users },
     { label: "Reports", to: "/system-admin/reports", icon: FileText },
   ];
   

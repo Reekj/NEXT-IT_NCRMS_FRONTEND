@@ -1,4 +1,3 @@
-```vue
 <!-- src/pages/roles/headquarters/layout/Layout.vue -->
 <template>
   <div class="min-h-screen bg-[#F6F7FB]">
@@ -66,7 +65,6 @@
       <div class="flex min-h-screen flex-1 flex-col">
         <!-- Topbar -->
         <header class="relative h-[76px] border-b border-[#0A2395]/10 bg-white">
-          <!-- subtle brand glow -->
           <div
             class="pointer-events-none absolute inset-0 opacity-100"
             style="
@@ -77,7 +75,7 @@
           />
 
           <div class="relative flex h-full items-center justify-between px-4 sm:px-6 lg:px-8">
-            <!-- LEFT: Mobile Hamburger + Desktop Logout -->
+            <!-- LEFT -->
             <div class="flex items-center gap-3">
               <!-- Mobile hamburger -->
               <button
@@ -115,7 +113,6 @@
 
             <!-- RIGHT: User -->
             <div class="flex items-center gap-3">
-              <!-- Avatar -->
               <div class="h-11 w-11 overflow-hidden rounded-full bg-black/10">
                 <img
                   v-if="headerUser?.avatarUrl"
@@ -128,21 +125,18 @@
                 </div>
               </div>
 
-              <!-- Name + role -->
               <div class="leading-tight">
                 <div class="text-[13px] font-semibold text-black">
                   {{ headerUser?.name || "User" }}
                 </div>
                 <div class="text-[12px] text-black/50">
-                  {{ headerUser?.role || "Role" }}
+                  {{ headerUser?.role || "Headquarters" }}
                 </div>
               </div>
             </div>
           </div>
         </header>
 
-        <!-- Page (brand background + soft glow) -->
-        <!-- IMPORTANT: add bottom padding so content doesn't hide behind fixed footer -->
         <main class="relative flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-10 pb-[92px]">
           <div
             class="pointer-events-none absolute inset-0 -z-10"
@@ -155,34 +149,13 @@
           />
           <slot></slot>
         </main>
-
-        <!-- FIXED BLUE BANNER FOOTER (ONLY THIS REMAINS) -->
-        <!-- <footer
-          class="fixed bottom-0 left-0 z-40 w-full border-t border-white/10
-                 bg-[linear-gradient(90deg,#0A2395_0%,#030B2F_100%)]
-                 text-white shadow-[0_-12px_28px_rgba(3,11,47,0.22)]"
-        >
-          <div class="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-10 py-4">
-            <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div class="flex items-center gap-3">
-                <span class="h-2.5 w-2.5 rounded-full bg-white/85" />
-                <div class="text-[12px] font-semibold text-white/95">NCRMS Headquarters</div>
-                <div class="text-[12px] text-white/70">Authorized access only</div>
-              </div>
-
-              <div class="text-[12px] text-white/70">
-                © {{ new Date().getFullYear() }} NCRMS • All activity is logged and audited.
-              </div>
-            </div>
-          </div>
-        </footer> -->
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { Menu, X } from "lucide-vue-next";
 import HeadquartersSidebar from "./Sidenav.vue";
@@ -191,13 +164,17 @@ const router = useRouter();
 const route = useRoute();
 
 const props = defineProps({
-  user: {
-    type: Object,
-    required: true,
-  },
+  user: { type: Object, required: true },
 });
 
-const USER_STORAGE_KEY = "ncrms_headquarters_current_user";
+/**
+ * ✅ Per-user header sync keys
+ * - ncrms_hq_current_user_key: stable key for the logged-in HQ user
+ * - ncrms_hq_user_cache: map of { [userKey]: { name, role, avatarUrl } }
+ */
+const HQ_CURRENT_USER_KEY = "ncrms_hq_current_user_key";
+const HQ_USER_CACHE_KEY = "ncrms_hq_user_cache";
+const HQ_UPDATE_EVENT = "ncrms-hq-user-updated";
 
 const headerUser = ref({
   name: props.user?.name || "User",
@@ -221,38 +198,63 @@ watch(
   }
 );
 
-function readCurrentUser() {
+function readJson(key, fallback) {
   try {
-    const raw = localStorage.getItem(USER_STORAGE_KEY);
-    const parsed = raw ? JSON.parse(raw) : null;
-    if (parsed && typeof parsed === "object") return parsed;
-    return null;
+    const raw = localStorage.getItem(key);
+    if (!raw) return fallback;
+    return JSON.parse(raw);
   } catch {
-    return null;
+    return fallback;
   }
 }
 
-function writeCurrentUser(nextUser) {
-  localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(nextUser));
+function readCurrentUserKey() {
+  return String(localStorage.getItem(HQ_CURRENT_USER_KEY) || "").trim();
 }
 
-function syncHeaderUserFromStorage() {
-  const stored = readCurrentUser();
-  if (stored) {
+function readUserCache() {
+  const cache = readJson(HQ_USER_CACHE_KEY, {});
+  return cache && typeof cache === "object" ? cache : {};
+}
+
+function syncHeaderUser() {
+  const userKey = readCurrentUserKey();
+  const cache = readUserCache();
+
+  if (userKey && cache[userKey]) {
+    const u = cache[userKey] || {};
     headerUser.value = {
-      name: stored.name || headerUser.value.name,
-      role: stored.role || headerUser.value.role,
-      avatarUrl: stored.avatarUrl || "",
+      name: u.name || "User",
+      role: u.role || "Headquarters",
+      avatarUrl: u.avatarUrl || "",
     };
-  } else {
-    // seed once so HQ header always has a source of truth
-    writeCurrentUser(headerUser.value);
+    return;
+  }
+
+  // fallback to props if cache not ready yet
+  headerUser.value = {
+    name: props.user?.name || "User",
+    role: props.user?.role || "Headquarters",
+    avatarUrl: props.user?.avatarUrl || "",
+  };
+}
+
+function onStorageEvent(e) {
+  if (!e?.key) return;
+  if (e.key === HQ_CURRENT_USER_KEY || e.key === HQ_USER_CACHE_KEY) {
+    syncHeaderUser();
   }
 }
 
 onMounted(() => {
-  syncHeaderUserFromStorage();
-  window.addEventListener("ncrms-hq-user-updated", syncHeaderUserFromStorage);
+  syncHeaderUser();
+  window.addEventListener(HQ_UPDATE_EVENT, syncHeaderUser);
+  window.addEventListener("storage", onStorageEvent);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener(HQ_UPDATE_EVENT, syncHeaderUser);
+  window.removeEventListener("storage", onStorageEvent);
 });
 
 const initials = computed(() => {
@@ -267,9 +269,12 @@ const initials = computed(() => {
 });
 
 function logout() {
-  localStorage.clear();
+  // ✅ clear HQ auth + current user pointer (keep cache so avatars persist per user)
+  localStorage.removeItem("ncrms_token_hq");
+  localStorage.removeItem("ncrms_user_hq");
+  localStorage.removeItem(HQ_CURRENT_USER_KEY);
+
   sessionStorage.clear();
   router.replace("/login/headquarters");
 }
 </script>
-```

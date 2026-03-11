@@ -81,13 +81,13 @@ const navItems = [
   { label: "State Commands", to: "/zonal-coordinator/state-commands", icon: Building2 },
   { label: "Commissioners", to: "/zonal-coordinator/commissioners", icon: Users },
   { label: "Zonal Officers", to: "/zonal-coordinator/zonal-officers", icon: UsersRound },
-  { label: "Divisions & Locations", to: "/zonal-coordinator/divisions-locations", icon: MapPin },
-  { label: "Staff Directory", to: "/zonal-coordinator/staff-directory", icon: Users2 },
-  { label: "Reports", to: "/zonal-coordinator/reports", icon: FileText },
-  { label: "Criminal Records", to: "/zonal-coordinator/criminal-records", icon: Folder },
-  { label: "Incident Reports", to: "/zonal-coordinator/incident-reports", icon: AlertTriangle },
-  { label: "Crime Analytics", to: "/zonal-coordinator/crime-analytics", icon: BarChart3 },
-  { label: "Forensic Evidence", to: "/zonal-coordinator/forensic-evidence", icon: Fingerprint },
+  { label: "Divisions & Locations", to: "/zonal-coordinators/divisions-locations", icon: MapPin },
+  { label: "Staff Directory", to: "/zonal-coordinators/staff-directory", icon: Users2 },
+  { label: "Reports", to: "/zonal-coordinators/reports", icon: FileText },
+  { label: "Criminal Records", to: "/zonal-coordinators/criminal-records", icon: Folder },
+  { label: "Incident Reports", to: "/zonal-coordinators/incident-reports", icon: AlertTriangle },
+  { label: "Crime Analytics", to: "/zonal-coordinators/crime-analytics", icon: BarChart3 },
+  { label: "Forensic Evidence", to: "/zonal-coordinators/forensic-evidence", icon: Fingerprint },
 ];
 
 function isActive(to) {
