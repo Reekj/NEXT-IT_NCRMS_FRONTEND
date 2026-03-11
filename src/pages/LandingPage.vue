@@ -239,9 +239,10 @@
     <div class="mt-10 h-[835px] grid grid-cols-1 items-center gap-10 md:grid-cols-2">
       <!-- Image placeholder -->
       <div class="h-full w-full overflow-hidden rounded-2xl bg-[#EEF2FF]">
-        <div class="grid h-full w-full place-items-center text-[14px] font-medium text-black/40">
+        <img class="h-full w-full" src="../assets/MOI.jpg" alt="" >
+        <!-- <div class="grid h-full w-full place-items-center text-[14px] font-medium text-black/40">
           Image Placeholder
-        </div>
+        </div> -->
       </div>
 
       <!-- Text -->
