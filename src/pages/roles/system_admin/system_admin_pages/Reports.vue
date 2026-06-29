@@ -158,10 +158,13 @@
                 :animate="{ opacity: 1, y: 0 }"
                 :transition="{ duration: 0.2, easing: 'ease-out' }"
               >
-                <th class="thCell">Timestamp</th>
+                <th class="thCell">Time</th>
                 <th class="thCell">User</th>
                 <th class="thCell">Action</th>
                 <th class="thCell">Detail</th>
+                <th class="thCell">Division</th>
+                <th class="thCell">Zone</th>
+                <th class="thCell">State</th>
                 <th class="thCell">Status</th>
               </Motion>
             </thead>

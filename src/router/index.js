@@ -702,10 +702,46 @@ const routes = [
     import("../pages/roles/officer/officer_pages/Profile.vue"),
 },
 {
+  path: "/officer/staff-directory",
+  name: "OfficerStaffDirectory",
+  component: () =>
+    import("../pages/roles/officer/officer_pages/StaffDirectory.vue"),
+},
+{
+  path: "/officer/staff-directory/:id",
+  name: "OfficerStaffDirectoryView",
+  component: () =>
+    import("../pages/roles/officer/officer_pages/StaffDirectoryView.vue"),
+},
+{
+  path: "/officer/incident-records/:id/comments",
+  name: "OfficerIncidentRecordComments",
+  component: () =>
+    import("../pages/roles/officer/officer_pages/IncidentRecordComments.vue"),
+},
+{
   path: "/officer/cases",
   name: "OfficerCases",
   component: () =>
     import("../pages/roles/officer/officer_pages/Cases.vue"),
+},
+{
+  path: "/officer/new-case",
+  name: "NewCase",
+  component: () =>
+    import("../pages/roles/officer/officer_pages/CaseNew.vue"),
+},
+{
+  path: "/officer/cases/:id",
+  name: "OfficerCaseView",
+  component: () =>
+    import("../pages/roles/officer/officer_pages/CaseView.vue"),
+},
+{
+  path: "/officer/cases/:id/edit",
+  name: "OfficerCaseEdit",
+  component: () =>
+    import("../pages/roles/officer/officer_pages/CaseEdit.vue"),
 },
 {
   path: "/officer/forensic-evidence",

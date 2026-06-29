@@ -70,6 +70,7 @@ const path = computed(() => route.path)
 const navItems = [
   { label: "Dashboard", to: "/officer/dashboard", icon: LayoutGrid },
   { label: "Profile", to: "/officer/profile", icon: User },
+  { label: "Staff Directory", to: "/officer/staff-directory", icon: User },
   { label: "Criminal Records", to: "/officer/criminal-records", icon: Folder },
   { label: "Incident Records", to: "/officer/incident-records", icon: AlertTriangle },
   { label: "Cases", to: "/officer/cases", icon: Users },

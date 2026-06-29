@@ -1,317 +1,376 @@
 <template>
-    <OfficerLayout :user="user">
-      <Motion
-        tag="div"
-        class="space-y-8"
-        :initial="{ opacity: 0, y: 10 }"
-        :animate="{ opacity: 1, y: 0 }"
-        :transition="{ duration: 0.35 }"
-      >
-        <!-- Title -->
-        <h1 class="text-[22px] font-semibold text-black">Dashboard</h1>
-  
-        <!-- Stat Cards -->
-        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
-          <StatCard
-            title="Active Cases"
-            value="6"
-            meta="5 critical"
-            metaTone="danger"
-            :icon="Briefcase"
-            iconBoxClass="border-purple-200 bg-purple-50"
-            iconClass="text-purple-700"
-          />
-  
-          <StatCard
-            title="Pending Incident"
-            value="2"
-            meta="10.5% from last month"
-            metaTone="success"
-            :icon="FileText"
-            iconBoxClass="border-blue-200 bg-blue-50"
-            iconClass="text-blue-700"
-          />
-  
-          <StatCard
-            title="Criminal Record"
-            value="30"
-            meta="+3 new zones"
-            metaTone="success"
-            :icon="AlertTriangle"
-            iconBoxClass="border-red-200 bg-red-50"
-            iconClass="text-red-600"
-          />
-  
-          <StatCard
-            title="Forensic Evidence"
-            value="5"
-            meta="Excellent"
-            metaTone="success"
-            :icon="Globe"
-            iconBoxClass="border-green-200 bg-green-50"
-            iconClass="text-green-700"
+  <OfficerLayout :user="safeUser">
+    <Motion
+      tag="div"
+      class="space-y-8"
+      :initial="{ opacity: 0, y: 10 }"
+      :animate="{ opacity: 1, y: 0 }"
+      :transition="{ duration: 0.35 }"
+    >
+      <h1 class="text-[22px] font-semibold text-[#111827]">Dashboard</h1>
+
+      <section class="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          v-for="card in visibleStats"
+          :key="card.key"
+          v-bind="card"
+          @open="handleStatOpen(card)"
+        />
+      </section>
+
+      <section v-if="canViewAnalytics" class="space-y-5">
+        <h2 class="text-[22px] font-semibold text-[#111827]">Crime Analytics Overview</h2>
+
+        <div class="rounded-[18px] border border-[#E5E7EB] bg-white px-4 py-5 shadow-[0_3px_8px_rgba(15,23,42,0.14)] sm:px-6">
+          <div class="chart-tab">Bar</div>
+
+          <ApexChart
+            type="bar"
+            height="305"
+            :options="crimeBarOptions"
+            :series="crimeBarSeries"
           />
         </div>
-  
-        <!-- Quick Links -->
-        <section class="rounded-2xl border border-black/10 bg-white shadow-sm overflow-hidden">
-          <div class="border-b border-black/10 px-6 py-5 sm:px-8">
-            <div class="text-[18px] font-semibold text-black">Quick Links</div>
-          </div>
-  
-          <div class="px-6 py-8 sm:px-8">
-            <div class="flex flex-wrap gap-6">
-              <button
-                type="button"
-                class="h-12 rounded-xl px-8 text-[14px] font-semibold text-white
-                       bg-[linear-gradient(90deg,#0A2395_0%,#030B2F_100%)]
-                       shadow-sm hover:opacity-95 active:opacity-90"
-                @click="goIncident"
-              >
-                Add Incident Report
-              </button>
-  
-              <button
-                type="button"
-                class="h-12 rounded-xl px-8 text-[14px] font-semibold text-white
-                       bg-[linear-gradient(90deg,#0A2395_0%,#030B2F_100%)]
-                       shadow-sm hover:opacity-95 active:opacity-90"
-                @click="goCriminal"
-              >
-                Update Criminal Record
-              </button>
-  
-              <button
-                type="button"
-                class="h-12 rounded-xl px-8 text-[14px] font-semibold text-white
-                       bg-[linear-gradient(90deg,#0A2395_0%,#030B2F_100%)]
-                       shadow-sm hover:opacity-95 active:opacity-90"
-                @click="goEvidence"
-              >
-                Upload Forensic Evidence
-              </button>
-            </div>
-          </div>
-        </section>
-  
-        <!-- Assigned Cases -->
-        <section class="rounded-2xl border border-black/10 bg-white shadow-sm overflow-hidden">
-          <div class="flex items-center justify-between gap-4 border-b border-black/10 px-6 py-5 sm:px-8">
-            <div class="text-[18px] font-semibold text-black">Assigned Cases</div>
-  
-            <div class="flex items-center gap-3">
-              <div class="relative w-[260px]">
-                <Search class="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-black/40" />
-                <input
-                  v-model="q"
-                  type="text"
-                  placeholder="Search ..."
-                  class="h-10 w-full rounded-xl border border-black/10 bg-white pl-10 pr-4 text-[13px]
-                         outline-none transition focus:border-[#0A2395] focus:ring-4 focus:ring-[#0A2395]/10"
-                />
-              </div>
-  
-              <button
-                type="button"
-                class="grid h-10 w-10 place-items-center rounded-xl border border-black/10 bg-white shadow-sm hover:bg-[#F9FAFB]"
-                @click="refresh"
-                aria-label="Refresh"
-              >
-                <RotateCw class="h-4 w-4 text-black/60" />
-              </button>
-            </div>
-          </div>
-  
-          <div class="overflow-x-auto">
-            <table class="w-full min-w-[980px] border-collapse text-left">
-              <thead>
-                <tr class="bg-white">
-                  <th class="thCell">Case ID</th>
-                  <th class="thCell">Case Title</th>
-                  <th class="thCell">Zone</th>
-                  <th class="thCell">Status</th>
-                  <th class="thCell thCell--last">Date</th>
-                </tr>
-              </thead>
-  
-              <tbody>
-                <tr v-for="row in filtered" :key="row.key" class="hover:bg-black/[0.01]">
-                  <td class="tdCell">{{ row.caseId }}</td>
-                  <td class="tdCell">{{ row.caseTitle }}</td>
-                  <td class="tdCell">{{ row.zone }}</td>
-                  <td class="tdCell">{{ row.status }}</td>
-                  <td class="tdCell tdCell--last">{{ row.date }}</td>
-                </tr>
-  
-                <tr v-if="filtered.length === 0">
-                  <td class="tdCell tdCell--last text-center text-black/50" colspan="5">
-                    No records found.
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
-      </Motion>
-    </OfficerLayout>
-  </template>
-  
-  <script setup>
-import { computed, ref, defineComponent, h } from "vue"
+      </section>
+
+      <section v-if="canViewAnalytics" class="space-y-5">
+        <h2 class="text-[22px] font-semibold text-[#111827]">Incident Report Trend</h2>
+
+        <div class="rounded-[18px] border border-[#E5E7EB] bg-white px-4 py-5 shadow-[0_3px_8px_rgba(15,23,42,0.14)] sm:px-6">
+          <div class="chart-tab">Line</div>
+
+          <ApexChart
+            type="line"
+            height="310"
+            :options="incidentLineOptions"
+            :series="incidentLineSeries"
+          />
+        </div>
+      </section>
+    </Motion>
+  </OfficerLayout>
+</template>
+
+<script setup>
+import { computed, defineComponent, h, markRaw } from "vue"
 import { useRouter } from "vue-router"
 import { Motion } from "@motionone/vue"
+import ApexChart from "vue3-apexcharts"
 import {
-  Briefcase,
   FileText,
   AlertTriangle,
-  Globe,
-  Search,
-  RotateCw,
+  BriefcaseBusiness,
+  Globe2,
   ArrowUpRight,
 } from "lucide-vue-next"
 import OfficerLayout from "../layout/Layout.vue"
 
 const router = useRouter()
 
-const user = ref({
+const currentUser = {
   name: "James King",
   role: "Officer",
   avatarUrl: "",
-})
-
-function goIncident() {
-  router.push({ path: "/officer/incident-records" })
-}
-function goCriminal() {
-  router.push({ path: "/officer/criminal-records" })
-}
-function goEvidence() {
-  router.push({ path: "/officer/forensic-evidence" })
+  permissions: [
+    "dashboard:view",
+    "analytics:view",
+    "criminal-records:view",
+    "incident-records:view",
+    "users:view-summary",
+  ],
 }
 
-/** Assigned cases (demo like Figma) */
-const q = ref("")
-const rows = ref([
-  { key: "1", caseId: "C-0011", caseTitle: "Theft", zone: "Zone 1", status: "Open", date: "1/28/2026" },
-  { key: "2", caseId: "C-0011", caseTitle: "Assault", zone: "Zone 2", status: "Closed", date: "1/28/2026" },
-  { key: "3", caseId: "C-0011", caseTitle: "Fraud", zone: "Zone 3", status: "Under Investigation", date: "1/28/2026" },
-  { key: "4", caseId: "C-0011", caseTitle: "Cybercrime", zone: "Zone 4", status: "Closed", date: "1/28/2026" },
-  { key: "5", caseId: "C-0011", caseTitle: "Drug Abuse", zone: "Zone 5", status: "Pending", date: "1/28/2026" },
+const safeUser = computed(() => ({
+  name: currentUser.name,
+  role: currentUser.role,
+  avatarUrl: currentUser.avatarUrl,
+}))
+
+function hasPermission(permission) {
+  return Array.isArray(currentUser.permissions) && currentUser.permissions.includes(permission)
+}
+
+const canViewAnalytics = computed(() => hasPermission("analytics:view"))
+
+const stats = computed(() => [
+  {
+    key: "criminal-records",
+    title: "Total Criminal Record",
+    value: "2,000,000",
+    meta: "10.5% from last month",
+    metaTone: "success",
+    permission: "criminal-records:view",
+    route: "/officer/criminal-records",
+    icon: markRaw(FileText),
+    iconBoxClass: "border-[#304FFE] bg-[#EEF2FF]",
+    iconClass: "text-[#304FFE]",
+  },
+  {
+    key: "incident-reports",
+    title: "Total Incident Report",
+    value: "30",
+    meta: "+ 3 new zones",
+    metaTone: "success",
+    permission: "incident-records:view",
+    route: "/officer/incident-records",
+    icon: markRaw(AlertTriangle),
+    iconBoxClass: "border-[#EF4444] bg-[#FEE2E2]",
+    iconClass: "text-[#DC2626]",
+  },
+  {
+    key: "today-records",
+    title: "Today Records",
+    value: "25",
+    meta: "5 critical",
+    metaTone: "danger",
+    permission: "criminal-records:view",
+    route: "/officer/criminal-records",
+    icon: markRaw(BriefcaseBusiness),
+    iconBoxClass: "border-[#A855F7] bg-[#F3E8FF]",
+    iconClass: "text-[#7E22CE]",
+  },
+  {
+    key: "users",
+    title: "Users",
+    value: "30",
+    meta: "+ 3 new zones",
+    metaTone: "success",
+    permission: "users:view-summary",
+    route: "/officer/staff-directory",
+    icon: markRaw(Globe2),
+    iconBoxClass: "border-[#22C55E] bg-[#DCFCE7]",
+    iconClass: "text-[#15803D]",
+  },
 ])
 
-function refresh() {
-  rows.value = [...rows.value]
+const visibleStats = computed(() => stats.value.filter((item) => hasPermission(item.permission)))
+
+function handleStatOpen(card) {
+  if (!hasPermission(card.permission)) return
+  router.push(card.route)
 }
 
-const filtered = computed(() => {
-  const term = String(q.value || "").trim().toLowerCase()
-  if (!term) return rows.value
-  return rows.value.filter((r) =>
-    `${r.caseId} ${r.caseTitle} ${r.zone} ${r.status} ${r.date}`.toLowerCase().includes(term)
-  )
-})
+const crimeCategories = [
+  "Theft",
+  "Assault",
+  "Fraud",
+  "Cybercrime",
+  "Drug Abuse",
+  "Homicide",
+  "Kidnapping",
+  "Domestic\nViolence",
+  "Bribery",
+  "Others",
+]
 
-/** ✅ FIX: real component so <StatCard /> renders in template */
+const crimeBarSeries = [
+  {
+    name: "Records",
+    data: [36, 11, 58, 10, 30, 91, 15, 93, 45, 79],
+  },
+]
+
+const crimeBarOptions = {
+  chart: {
+    toolbar: { show: false },
+    fontFamily: "Inter, ui-sans-serif, system-ui",
+  },
+  plotOptions: {
+    bar: {
+      columnWidth: "75%",
+      borderRadius: 0,
+    },
+  },
+  colors: ["#4965F5"],
+  dataLabels: { enabled: false },
+  grid: {
+    borderColor: "#C9CDD5",
+    strokeDashArray: 3,
+  },
+  xaxis: {
+    categories: crimeCategories,
+    labels: {
+      style: {
+        colors: "#4B5563",
+        fontSize: "12px",
+        fontWeight: 600,
+      },
+    },
+    axisBorder: { color: "#9CA3AF" },
+    axisTicks: { show: false },
+  },
+  yaxis: {
+    min: 0,
+    max: 100,
+    tickAmount: 5,
+    labels: {
+      style: {
+        colors: "#4B5563",
+        fontSize: "12px",
+        fontWeight: 600,
+      },
+    },
+  },
+  tooltip: {
+    theme: "light",
+  },
+}
+
+const incidentLineSeries = [
+  {
+    name: "2026",
+    data: [70, 17, 32, 20, 41, 12, 57, 15, 57, 52, 92, 42],
+  },
+]
+
+const incidentLineOptions = {
+  chart: {
+    toolbar: { show: false },
+    fontFamily: "Inter, ui-sans-serif, system-ui",
+    zoom: { enabled: false },
+  },
+  colors: ["#8EA2FF"],
+  stroke: {
+    curve: "smooth",
+    width: 2,
+  },
+  markers: {
+    size: 5,
+    strokeWidth: 4,
+    strokeColors: "#DDE4FF",
+    colors: ["#8EA2FF"],
+  },
+  grid: {
+    borderColor: "#C9CDD5",
+    strokeDashArray: 3,
+  },
+  dataLabels: { enabled: false },
+  xaxis: {
+    categories: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec"],
+    labels: {
+      style: {
+        colors: "#4B5563",
+        fontSize: "12px",
+      },
+    },
+    axisBorder: { color: "#9CA3AF" },
+    axisTicks: { show: false },
+  },
+  yaxis: {
+    min: 0,
+    max: 100,
+    tickAmount: 5,
+    labels: {
+      style: {
+        colors: "#4B5563",
+        fontSize: "12px",
+      },
+    },
+  },
+  legend: {
+    show: true,
+    position: "bottom",
+    horizontalAlign: "center",
+    markers: {
+      width: 8,
+      height: 8,
+      radius: 8,
+    },
+  },
+  tooltip: {
+    theme: "light",
+  },
+}
+
 const StatCard = defineComponent({
   name: "StatCard",
   props: {
-    title: { type: String, default: "" },
-    value: { type: String, default: "" },
-    meta: { type: String, default: "" },
-    metaTone: { type: String, default: "success" },
-    icon: { type: [Object, Function], default: null },
-    iconBoxClass: { type: String, default: "" },
-    iconClass: { type: String, default: "" },
+    title: String,
+    value: String,
+    meta: String,
+    metaTone: String,
+    icon: [Object, Function],
+    iconBoxClass: String,
+    iconClass: String,
   },
-  setup(props) {
+  emits: ["open"],
+  setup(props, { emit }) {
     return () =>
       h(
-        Motion,
+        "article",
         {
-          tag: "div",
-          class: "rounded-2xl border border-black/10 bg-white shadow-sm overflow-hidden",
-          initial: { opacity: 0, y: 10 },
-          animate: { opacity: 1, y: 0 },
-          transition: { duration: 0.22 },
+          class:
+            "overflow-hidden rounded-[14px] border border-[#E1E5EC] bg-white shadow-[0_2px_5px_rgba(15,23,42,0.06)]",
         },
-        {
-          default: () => [
-            h("div", { class: "p-5" }, [
-              h("div", { class: "flex items-start justify-between gap-3" }, [
-                h("div", { class: ["grid h-11 w-11 place-items-center rounded-xl border", props.iconBoxClass] }, [
-                  props.icon ? h(props.icon, { class: ["h-5 w-5", props.iconClass] }) : null,
-                ]),
-
-                h(
-                  "button",
-                  {
-                    type: "button",
-                    class:
-                      "grid h-9 w-9 place-items-center rounded-full border border-black/10 bg-white text-black/45 " +
-                      "hover:bg-black/[0.03] hover:text-black/70 active:scale-[0.98]",
-                    "aria-label": "Open",
-                  },
-                  [h(ArrowUpRight, { class: "h-4 w-4" })]
-                ),
-              ]),
-
-              h("div", { class: "mt-5 text-[13px] font-medium text-black/45" }, props.title),
-              h("div", { class: "mt-1 text-[22px] font-semibold text-black" }, props.value),
-            ]),
-
-            h("div", { class: "border-t border-black/10 px-5 py-3" }, [
+        [
+          h("div", { class: "p-4" }, [
+            h("div", { class: "flex items-start justify-between gap-3" }, [
               h(
                 "div",
                 {
                   class: [
-                    "text-[12px] font-semibold",
-                    props.metaTone === "danger" ? "text-red-600" : "text-green-700",
+                    "grid h-10 w-10 place-items-center rounded-[10px] border",
+                    props.iconBoxClass,
                   ],
                 },
-                [
-                  props.metaTone !== "danger"
-                    ? h("span", { class: "mr-1 align-[-2px] inline-block" }, "↑")
-                    : null,
-                  props.meta,
-                ]
+                [props.icon ? h(props.icon, { class: ["h-5 w-5", props.iconClass] }) : null]
+              ),
+
+              h(
+                "button",
+                {
+                  type: "button",
+                  class:
+                    "mt-[70px] grid h-7 w-7 place-items-center rounded-full border border-[#CBD5E1] text-[#94A3B8] transition hover:border-[#1D4ED8] hover:text-[#1D4ED8]",
+                  "aria-label": `Open ${props.title}`,
+                  onClick: () => emit("open"),
+                },
+                [h(ArrowUpRight, { class: "h-4 w-4" })]
               ),
             ]),
-          ],
-        }
+
+            h("p", { class: "mt-4 text-[13px] font-semibold text-[#667085]" }, props.title),
+            h("p", { class: "mt-1 text-[20px] font-bold leading-none text-[#111827]" }, props.value),
+          ]),
+
+          h("div", { class: "border-t border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3" }, [
+            h(
+              "p",
+              {
+                class: [
+                  "text-[12px] font-bold",
+                  props.metaTone === "danger" ? "text-[#B91C1C]" : "text-[#047857]",
+                ],
+              },
+              props.metaTone === "danger" ? props.meta : `↑ ${props.meta}`
+            ),
+          ]),
+        ]
       )
   },
 })
 </script>
 
-  <style scoped>
-  /* MUST: show table cell borders (vertical + horizontal) */
-  .thCell {
-    height: 58px;
-    text-align: left;
-    padding: 0 18px;
-    font-size: 13px;
-    font-weight: 500;
-    color: rgba(0, 0, 0, 0.45);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
-    border-right: 1px solid rgba(0, 0, 0, 0.12);
-    background: rgba(0, 0, 0, 0.02);
-  }
-  .thCell--last {
-    border-right: none;
-  }
-  
-  .tdCell {
-    height: 64px;
-    padding: 0 18px;
-    font-size: 13px;
-    color: rgba(0, 0, 0, 0.72);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-    border-right: 1px solid rgba(0, 0, 0, 0.1);
-    background: #fff;
-    vertical-align: middle;
-  }
-  .tdCell--last {
-    border-right: none;
-  }
-  </style>
-  
+<style scoped>
+.chart-tab {
+  position: relative;
+  margin-bottom: 18px;
+  width: 100%;
+  border-bottom: 1px solid #d1d5db;
+  padding: 0 0 8px 6px;
+  color: #111827;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.chart-tab::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  height: 3px;
+  width: 28px;
+  background: #06b6d4;
+  border-radius: 999px;
+}
+</style>
